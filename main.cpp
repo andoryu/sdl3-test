@@ -7,7 +7,6 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 #include <string>
-#include <chrono>
 
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -17,7 +16,6 @@
 
 #include "shader.hpp"
 #include "model.hpp"
-#include "timer.hpp"
 #include "appstate.hpp"
 
 
@@ -145,6 +143,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     load_model_matrix(app->shader_program, model);
 
     app->last_frame = SDL_GetTicks();
+    app->redraw = false;
 
     *appstate = app;
     return SDL_APP_CONTINUE;
@@ -154,16 +153,19 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *app = (AppState *)appstate;
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (app->redraw)
+    {
+        glm::mat4 projection = glm::ortho<float>(0.0f, (float)app->width, (float)app->height, 0.0f, 0.01f, 100.0f);
+        load_projection_matrix(app->shader_program, projection);
+        glViewport(0, 0, app->width, app->height);
 
-    glm::mat4 projection = glm::ortho<float>(0.0f, (float)app->width, (float)app->height, 0.0f, 0.01f, 100.0f);
-    load_projection_matrix(app->shader_program, projection);
-    glViewport(0, 0, app->width, app->height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shape_draw(&app->shape);
+        shape_draw(&app->shape);
 
-    SDL_GL_SwapWindow(app->window);
-
+        SDL_GL_SwapWindow(app->window);
+        app->redraw = false;
+    }
     return SDL_APP_CONTINUE;
 }
 
@@ -187,30 +189,15 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
         case SDL_EVENT_WINDOW_RESIZED:
         {
-            int newWidth = event->window.data1;
-            int newHeight = event->window.data2;
-
-            std::cout << "Resized: Width, height: " << newWidth << ", " << newHeight << std::endl;
-
-            // glm::mat4 projection = glm::ortho<float>(0.0f, (float)newWidth, (float)newHeight, 0.0f, 0.01f, 100.0f);
-            // load_projection_matrix(app->shader_program, projection);
-            // glViewport(0, 0, newWidth, newHeight);
-
-            // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            // shape_draw(&app->shape);
-            // SDL_GL_SwapWindow(app->window);
-
-            app->width = newWidth;
-            app->height = newHeight;
+            app->width  = event->window.data1;
+            app->height = event->window.data2;
             return SDL_APP_CONTINUE;
         }
 
         case SDL_EVENT_WINDOW_EXPOSED:
         {
-            int newWidth = event->window.data1;
-            int newHeight = event->window.data2;
-
-            // std::cout << "Exposed: Width, height: " << newWidth << ", " << newHeight << std::endl;
+            app->redraw = true;
+            return SDL_APP_CONTINUE;
         }
     }
 

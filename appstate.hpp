@@ -23,6 +23,8 @@ struct AppState
     Model shape;
 
     Uint64 last_frame;
+
+    bool redraw;
 };
 
 
