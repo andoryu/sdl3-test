@@ -9,5 +9,7 @@ this uses meson so in this directory:
 - meson compile
 - ./sdl3-test
 
-try resizing the window...
+try vertically resizing the window.
+
+then change the **if** statement on line 176 in SDL_AppIterate to **if(true) {...} ** and try vertically resizing window.
 
